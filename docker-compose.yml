@@ -1,16 +1,16 @@
 version: "3.9"
 
 services:
-  frontend:
-    build: ./frontend
+  client:
+    build: ./client
     container_name: music-frontend
     ports:
       - "5173:5173"
     depends_on:
       - backend
 
-  backend:
-    build: ./backend
+  server:
+    build: ./server
     container_name: music-backend
     ports:
       - "8070:8070"

@@ -45,5 +45,5 @@ app.post("/log", (req, res) => {
 
 
 app.listen(8070, () => {
-    console.log("Server started on port 8080")
+    console.log("Server started on port 8070")
 })

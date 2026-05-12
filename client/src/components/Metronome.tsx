@@ -8,7 +8,7 @@ export default function Metronome() {
     const intervalRef = useRef<number | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const logEvent = async (event: string, data = {}) => {
-        await fetch("http://localhost:3000/log", {
+        await fetch("http://backend:8070/log", {
             method: "POST",
             headers: {
             "Content-Type": "application/json",

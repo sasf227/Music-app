@@ -1,9 +1,16 @@
 version: "3.9"
 
 services:
-  music-app:
-    build: .
-    container_name: music-app
+  frontend:
+    build: ./frontend
+    container_name: music-frontend
     ports:
-      - "3000:3000"
-    restart: unless-stopped
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    container_name: music-backend
+    ports:
+      - "8070:8070"

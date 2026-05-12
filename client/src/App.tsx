@@ -1,58 +1,113 @@
-import './App.css'
-import axios from 'axios'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from "react"
 
+export default function Metronome() {
+  const [bpm, setBpm] = useState<number>(120)
+  const [playing, setPlaying] = useState<boolean>(false)
+  const [beat, setBeat] = useState<number>(0)
 
-
-function App() {
-  const [array, setArray] = useState([]);
-
-  const fetchData = async () => {
-    const response = await axios.get("http://localhost:8070/api");
-    setArray(response.data.blogPost);
-  }
+  const intervalRef = useRef<number | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
 
   useEffect(() => {
-    fetchData();
-  }, [])
+    if (playing) {
+      startMetronome()
+    } else {
+      stopMetronome()
+    }
 
-  const playButton = document.getElementById('playMetronome');
-  const stopButton = document.getElementById('stopMetronome');
-  const bpmSlider = document.getElementById('bpmSlider');
-  const bpmEl = document.getElementById('bpm');
-  const beatTxt = document.getElementById('beatsText');
-  const beatBTN = document.querySelectorAll('button.beatsBTN');
-  const audio = new Audio("/metronome_normal.mp3")
-  let audioBuffer;
-  let i =1;
-  let beat_count = 4
-  let metronome;
-  let bpm = 140;
-  let isplaying = false;
+    return () => stopMetronome()
+  }, [playing, bpm])
+
+  const playClick = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
+
+    const ctx = audioContextRef.current
+
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+
+    oscillator.frequency.value = beat === 0 ? 1000 : 700
+
+    gainNode.gain.setValueAtTime(1, ctx.currentTime)
+
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      ctx.currentTime + 0.05
+    )
+
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.05)
+  }
+
+  const startMetronome = () => {
+    const interval = (60 / bpm) * 1000
+
+    intervalRef.current = window.setInterval(() => {
+      setBeat(prev => (prev + 1) % 4)
+
+      playClick()
+    }, interval)
+  }
+
+  const stopMetronome = () => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current)
+    }
+  }
 
   return (
-    <>
-      <div className='min-h-screen w-full bg-gray-100 flex items-center justify-center flex-col gap-10'>
+    <div className="bg-zinc-800 p-8 rounded-3xl shadow-2xl w-87.5">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        Metronome
+      </h1>
 
-        <h1 className='text-5xl font-bold text-gray-800'>Backend with Express and Node</h1>
-        <button className='text-5xl font-bold text-blue-600'>Play</button>
-
-        <ul className='rounded-2xl shadow-lg p-5 bg-white space-y-3'>
-          {
-            array.map((blog, index) => (
-              <li key={index} 
-              className='bg-sky-100 p-4 rounded-2xl transition-transform transform hover:scale-105'>
-
-                <p className='text-xl font-semibold text-gray-800'>{blog.title}</p>
-                <p className='text-sm text-gray-600'>{blog.content}</p>
-              </li>
-            ))
-          }
-        </ul>
+      <div className="flex justify-center gap-3 mb-8">
+        {[0, 1, 2, 3].map(index => (
+          <div
+            key={index}
+            className={`w-6 h-6 rounded-full transition-all duration-75 ${
+              beat === index
+                ? "bg-green-400 scale-125"
+                : "bg-zinc-600"
+            }`}
+          />
+        ))}
       </div>
-      
-    </>
+
+      <div className="text-center mb-6">
+        <div className="text-5xl font-bold">
+          {bpm}
+        </div>
+
+        <div className="text-zinc-400">
+          BPM
+        </div>
+      </div>
+
+      <input
+        type="range"
+        min="40"
+        max="240"
+        value={bpm}
+        onChange={(e) => setBpm(Number(e.target.value))}
+        className="w-full mb-8"
+      />
+
+      <button
+        onClick={() => setPlaying(!playing)}
+        className={`w-full py-3 rounded-xl font-semibold text-lg transition ${
+          playing
+            ? "bg-red-500 hover:bg-red-600"
+            : "bg-green-500 hover:bg-green-600"
+        }`}
+      >
+        {playing ? "Stop" : "Start"}
+      </button>
+    </div>
   )
 }
-
-export default App
